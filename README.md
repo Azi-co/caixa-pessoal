@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Caixa Pessoal — Web
 
-## Getting Started
+Aplicação normal em Next.js com Supabase para autenticação, banco e comprovantes privados.
 
-First, run the development server:
+Este aplicativo usa um espaço isolado dentro do Supabase compartilhado: schema `caixa`, tabela `caixa.transactions`, membros em `caixa.members` e bucket privado `caixa-files`.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Configuração
+
+1. Crie um projeto em <https://supabase.com/dashboard>.
+2. Abra **SQL Editor** e execute `supabase/migrations/001_initial.sql`.
+3. Em **Project Settings → API → Exposed schemas**, adicione `caixa`.
+4. Em **Project Settings → API**, copie a URL e a chave pública `anon`.
+5. Copie `.env.example` para `.env.local` e preencha as duas variáveis.
+6. Execute `npm run dev` e abra a página inicial. Não há login.
+
+## Acesso
+
+O aplicativo não possui login. Quem tiver o endereço consegue consultar e alterar o caixa. O schema e o bucket continuam separados dos outros miniaplicativos, mas não existe proteção individual dentro deste app.
+
+Se a migration antiga com login já foi executada, aplique `supabase/migrations/002_remove_login.sql`. Em uma instalação nova, execute apenas `001_initial.sql`.
+
+## Verificação
+
+```powershell
+npm.cmd run lint
+npm.cmd run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Publicação no GitHub Pages
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+O projeto usa exportação estática do Next.js. O workflow `.github/workflows/deploy-pages.yml` gera `out/` e publica automaticamente quando há push na branch `main`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+No repositório GitHub:
 
-## Learn More
+1. Em **Settings → Secrets and variables → Actions**, crie os secrets `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+2. Em **Settings → Pages → Build and deployment**, selecione **GitHub Actions**.
+3. Faça push para `main`.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O caminho-base é calculado automaticamente pelo nome do repositório durante o build.
