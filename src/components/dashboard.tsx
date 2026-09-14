@@ -1,23 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import {
-  AlertCircle,
-  ArchiveRestore,
-  ArrowDownLeft,
-  ArrowUpRight,
-  CalendarDays,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  LogOut,
-  Paperclip,
-  Search,
-  ShieldCheck,
-  Trash2,
-  Wallet,
-  X,
-} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 type Transaction = {
@@ -67,18 +50,22 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
 
   // Restaurar sessão persistida do localStorage logo após montar no cliente
   useEffect(() => {
+    let restoreTimer: number | undefined;
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed?.manager?.id && parsed?.pin) {
-          setManager(parsed.manager);
-          setManagerPin(parsed.pin);
+          restoreTimer = window.setTimeout(() => {
+            setManager(parsed.manager);
+            setManagerPin(parsed.pin);
+          }, 0);
         }
       }
     } catch {
       localStorage.removeItem(STORAGE_KEY);
     }
+    return () => { if (restoreTimer) window.clearTimeout(restoreTimer); };
   }, []);
 
   const active = useMemo(() => transactions.filter((item) => !item.deleted_at), [transactions]);
@@ -306,9 +293,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
     <div className={busy ? "app-shell busy" : "app-shell"}>
       <header className="topbar">
         <div className="brand">
-          <span className="logo-mark">
-            <Wallet size={21} />
-          </span>
+          <span className="logo-mark" aria-hidden="true" />
           <div>
             <strong>Instituto Pio XII</strong>
             <small>Portal da Transparência Escolar</small>
@@ -317,10 +302,10 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
         {manager ? (
           <div className="manager-session">
             <span>
-              <ShieldCheck size={16} /> {manager.display_name}
+              {manager.display_name}
             </span>
             <button onClick={logout} aria-label="Sair da área de gestão" title="Sair da gestão">
-              <LogOut size={17} />
+              Sair
             </button>
           </div>
         ) : (
@@ -331,7 +316,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
               setAuthOpen(true);
             }}
           >
-            <ShieldCheck size={17} /> Área da gestão
+            Área da gestão
           </button>
         )}
       </header>
@@ -346,10 +331,10 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
           {manager && (
             <div className="transaction-buttons">
               <button className="deposit-button" onClick={() => openTransactionDialog("deposit")}>
-                <ArrowDownLeft size={20} /> Novo depósito
+                Novo depósito
               </button>
               <button className="expense-button" onClick={() => openTransactionDialog("expense")}>
-                <ArrowUpRight size={20} /> Nova despesa
+                Nova despesa
               </button>
             </div>
           )}
@@ -358,11 +343,10 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
         {message && (
           <div className={`notice ${messageType}`} role={messageType === "error" ? "alert" : "status"}>
             <div className="notice-content">
-              {messageType === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
               <span>{message}</span>
             </div>
             <button className="notice-close" onClick={() => setMessage("")} aria-label="Fechar mensagem">
-              <X size={16} />
+              fechar
             </button>
           </div>
         )}
@@ -374,9 +358,6 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
             <small>Saldo líquido das transações ativas</small>
           </article>
           <article className="summary-card movement-card">
-            <span className="summary-icon deposit">
-              <ArrowDownLeft size={20} />
-            </span>
             <div>
               <span>Entradas (Depósitos)</span>
               <strong className="positive">{formatMoney(deposits)}</strong>
@@ -384,9 +365,6 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
             </div>
           </article>
           <article className="summary-card movement-card">
-            <span className="summary-icon expense">
-              <ArrowUpRight size={20} />
-            </span>
             <div>
               <span>Saídas (Despesas)</span>
               <strong className="negative">{formatMoney(expenses)}</strong>
@@ -420,7 +398,6 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
 
           <div className="panel-filters-bar">
             <div className="search-box">
-              <Search size={16} className="search-icon" />
               <input
                 type="text"
                 placeholder="Buscar por aluno, descrição, turma ou fornecedor..."
@@ -430,7 +407,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
               />
               {searchQuery && (
                 <button className="clear-search" onClick={() => setSearchQuery("")} aria-label="Limpar busca">
-                  <X size={15} />
+                  limpar
                 </button>
               )}
             </div>
@@ -446,13 +423,13 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                 className={`filter-pill deposit-pill ${typeFilter === "deposit" ? "active" : ""}`}
                 onClick={() => setTypeFilter("deposit")}
               >
-                <ArrowDownLeft size={14} /> Entradas
+                Entradas
               </button>
               <button
                 className={`filter-pill expense-pill ${typeFilter === "expense" ? "active" : ""}`}
                 onClick={() => setTypeFilter("expense")}
               >
-                <ArrowUpRight size={14} /> Saídas
+                Saídas
               </button>
             </div>
           </div>
@@ -463,7 +440,6 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
             </div>
           ) : !visible.length ? (
             <div className="empty-state">
-              <span className="empty-icon">{showDeleted ? <Trash2 size={24} /> : <Wallet size={24} />}</span>
               <strong>
                 {searchQuery || typeFilter !== "all"
                   ? "Nenhum resultado encontrado"
@@ -493,10 +469,10 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
               ) : manager && !showDeleted ? (
                 <div className="empty-actions">
                   <button className="deposit-button compact" onClick={() => openTransactionDialog("deposit")}>
-                    <ArrowDownLeft size={18} /> Depósito
+                    Depósito
                   </button>
                   <button className="expense-button compact" onClick={() => openTransactionDialog("expense")}>
-                    <ArrowUpRight size={18} /> Despesa
+                    Despesa
                   </button>
                 </div>
               ) : null}
@@ -506,14 +482,14 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
               {visible.map((item) => (
                 <article className="transaction-row" key={item.id}>
                   <span className={`transaction-icon ${item.type}`}>
-                    {item.type === "deposit" ? <ArrowDownLeft size={19} /> : <ArrowUpRight size={19} />}
+                    {item.type === "deposit" ? "+" : "−"}
                   </span>
 
                   <div className="transaction-copy">
                     <div className="title-row">
                       <strong>{item.name}</strong>
                       <span className="mobile-date">
-                        <CalendarDays size={13} /> {formatDate(item.occurred_on)}
+                        {formatDate(item.occurred_on)}
                       </span>
                     </div>
 
@@ -530,7 +506,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                           onClick={() => openReceipt(item.receipt_path!)}
                           title="Clique para abrir o comprovante"
                         >
-                          <Paperclip size={13} /> Comprovante
+                          Ver comprovante
                         </button>
                       )}
                     </div>
@@ -543,7 +519,6 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                   </div>
 
                   <time className="desktop-time">
-                    <CalendarDays size={15} />
                     {formatDate(item.occurred_on)}
                   </time>
 
@@ -560,7 +535,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                         aria-label="Abrir comprovante"
                         title="Ver comprovante"
                       >
-                        <Paperclip size={18} />
+                        Ver
                       </button>
                     )}
                     {manager && (
@@ -570,7 +545,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                         aria-label={item.deleted_at ? "Restaurar" : "Excluir"}
                         title={item.deleted_at ? "Restaurar transação" : "Mover para lixeira"}
                       >
-                        {item.deleted_at ? <ArchiveRestore size={18} /> : <Trash2 size={18} />}
+                        {item.deleted_at ? "Restaurar" : "Excluir"}
                       </button>
                     )}
                   </div>
@@ -597,7 +572,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                 <h2 id="auth-title">Área da Gestão</h2>
               </div>
               <button className="icon-button" onClick={() => setAuthOpen(false)} aria-label="Fechar">
-                <X size={20} />
+                Fechar
               </button>
             </header>
 
@@ -606,7 +581,6 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
 
               {authError && (
                 <div className="modal-notice error" role="alert">
-                  <AlertCircle size={17} />
                   <span>{authError}</span>
                 </div>
               )}
@@ -646,7 +620,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                       onClick={() => setShowPin(!showPin)}
                       aria-label={showPin ? "Ocultar PIN" : "Mostrar PIN"}
                     >
-                      {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showPin ? "Ocultar" : "Mostrar"}
                     </button>
                   </div>
                 </label>
@@ -678,7 +652,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
             <header>
               <h2 id="dialog-title">{transactionType === "deposit" ? "Novo Depósito" : "Nova Despesa"}</h2>
               <button className="icon-button" onClick={() => setDialogOpen(false)} aria-label="Fechar">
-                <X size={20} />
+                Fechar
               </button>
             </header>
 
@@ -687,7 +661,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                 <input name="type" type="hidden" value={transactionType} />
                 <div className={`selected-type ${transactionType}`}>
                   <span className="summary-icon">
-                    {transactionType === "deposit" ? <ArrowDownLeft size={19} /> : <ArrowUpRight size={19} />}
+                    {transactionType === "deposit" ? "+" : "−"}
                   </span>
                   <div>
                     <small>Tipo de Registro</small>
