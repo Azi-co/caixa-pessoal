@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArchiveRestore, Paperclip, Plus, Trash2, Wallet, X } from "lucide-react";
+import { ArchiveRestore, ArrowDownLeft, ArrowUpRight, CalendarDays, Paperclip, Plus, Trash2, Wallet, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 type Transaction = {
@@ -21,7 +21,9 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
   const [showDeleted, setShowDeleted] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error">("success");
   const formRef = useRef<HTMLFormElement>(null);
   const supabase = useMemo(() => createClient(), []);
   const active = transactions.filter((item) => !item.deleted_at);
@@ -39,11 +41,13 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
   }
 
   useEffect(() => {
-    void supabase.schema("caixa").from("transactions").select("*").order("occurred_on", { ascending: false }).order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) setMessage(error.message);
+    async function loadTransactions() {
+      const { data, error } = await supabase.schema("caixa").from("transactions").select("*").order("occurred_on", { ascending: false }).order("created_at", { ascending: false });
+        if (error) { setMessageType("error"); setMessage(error.message); }
         else setTransactions(data ?? []);
-      });
+      setLoading(false);
+    }
+    void loadTransactions();
   }, [supabase]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -71,45 +75,48 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
         if (receiptPath) await supabase.storage.from("caixa-files").remove([receiptPath]);
         throw error;
       }
-      await refresh(); formRef.current?.reset(); setDialogOpen(false); setMessage("Transação salva.");
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Não foi possível salvar."); }
+      await refresh(); formRef.current?.reset(); setDialogOpen(false); setMessageType("success"); setMessage("Transação salva com sucesso.");
+    } catch (error) { setMessageType("error"); setMessage(error instanceof Error ? error.message : "Não foi possível salvar."); }
     finally { setBusy(false); }
   }
 
   async function toggleDeleted(item: Transaction) {
     setBusy(true); setMessage("");
     const { error } = await supabase.schema("caixa").from("transactions").update({ deleted_at: item.deleted_at ? null : new Date().toISOString() }).eq("id", item.id);
-    if (error) setMessage(error.message); else await refresh();
+    if (error) { setMessageType("error"); setMessage(error.message); }
+    else { await refresh(); setMessageType("success"); setMessage(item.deleted_at ? "Transação restaurada." : "Transação movida para excluídas."); }
     setBusy(false);
   }
 
   async function openReceipt(path: string) {
     const { data, error } = await supabase.storage.from("caixa-files").createSignedUrl(path, 60);
-    if (error) setMessage(error.message); else window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    if (error) { setMessageType("error"); setMessage(error.message); } else window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
   return (
     <div className={busy ? "app-shell busy" : "app-shell"}>
       <header className="topbar">
-        <div className="brand"><span className="logo-mark"><Wallet size={21} /></span> Caixa Pessoal</div>
+        <div className="brand"><span className="logo-mark"><Wallet size={21} /></span><span>Caixa Pessoal</span></div>
+        <span className="privacy-label">Caixa único</span>
       </header>
       <main className="dashboard">
         <section className="dashboard-heading">
-          <div><h1>Meu caixa</h1><p>Acompanhe seu saldo e suas transações.</p></div>
+          <div><span className="eyebrow">Visão geral</span><h1>Meu caixa</h1><p>Entradas, despesas e comprovantes em um só lugar.</p></div>
           <button className="primary-button" onClick={() => setDialogOpen(true)}><Plus size={20} /> Nova transação</button>
         </section>
-        {message && <div className="notice" role="status">{message}</div>}
+        {message && <div className={`notice ${messageType}`} role={messageType === "error" ? "alert" : "status"}>{message}</div>}
         <section className="summary-grid">
-          <article className="summary-card"><span>Saldo atual</span><strong>{formatMoney(deposits - expenses)}</strong></article>
-          <article className="summary-card"><span>Depósitos</span><strong className="positive">{formatMoney(deposits)}</strong></article>
-          <article className="summary-card"><span>Despesas</span><strong className="negative">{formatMoney(expenses)}</strong></article>
+          <article className="summary-card balance-card"><span>Saldo disponível</span><strong>{formatMoney(deposits - expenses)}</strong><small>Calculado com as transações ativas</small></article>
+          <article className="summary-card movement-card"><span className="summary-icon deposit"><ArrowDownLeft size={19} /></span><div><span>Depósitos</span><strong className="positive">{formatMoney(deposits)}</strong></div></article>
+          <article className="summary-card movement-card"><span className="summary-icon expense"><ArrowUpRight size={19} /></span><div><span>Despesas</span><strong className="negative">{formatMoney(expenses)}</strong></div></article>
         </section>
         <section className="transactions-panel">
-          <header><h2>Transações</h2><div className="tabs"><button className={!showDeleted ? "active" : ""} onClick={() => setShowDeleted(false)}>Ativas</button><button className={showDeleted ? "active" : ""} onClick={() => setShowDeleted(true)}>Excluídas</button></div></header>
-          {!visible.length ? <div className="empty-state">Nenhuma transação {showDeleted ? "excluída" : "cadastrada"}.</div> : visible.map((item) => (
+          <header><div><h2>Transações</h2><span className="panel-subtitle">{active.length} {active.length === 1 ? "registro ativo" : "registros ativos"}</span></div><div className="tabs"><button className={!showDeleted ? "active" : ""} onClick={() => setShowDeleted(false)}>Ativas <span>{active.length}</span></button><button className={showDeleted ? "active" : ""} onClick={() => setShowDeleted(true)}>Excluídas <span>{deleted.length}</span></button></div></header>
+          {loading ? <div className="loading-state"><span className="spinner" /> Carregando transações...</div> : !visible.length ? <div className="empty-state"><span className="empty-icon">{showDeleted ? <Trash2 size={24} /> : <Wallet size={24} />}</span><strong>{showDeleted ? "Nenhuma transação excluída" : "Seu caixa está vazio"}</strong><p>{showDeleted ? "As transações removidas aparecerão aqui." : "Registre seu primeiro depósito ou despesa."}</p>{!showDeleted && <button className="secondary-button" onClick={() => setDialogOpen(true)}><Plus size={18} /> Criar primeira transação</button>}</div> : visible.map((item) => (
             <article className="transaction-row" key={item.id}>
-              <div><strong>{item.name}</strong><span>{item.type === "deposit" ? "Depósito" : "Despesa"}{item.receipt_name ? " · comprovante anexado" : ""}</span></div>
-              <time>{formatDate(item.occurred_on)}</time>
+              <span className={`transaction-icon ${item.type}`}>{item.type === "deposit" ? <ArrowDownLeft size={19} /> : <ArrowUpRight size={19} />}</span>
+              <div className="transaction-copy"><strong>{item.name}</strong><span>{item.type === "deposit" ? "Depósito" : "Despesa"}{item.receipt_name ? " · com comprovante" : ""}</span></div>
+              <time><CalendarDays size={15} />{formatDate(item.occurred_on)}</time>
               <b className={item.type === "deposit" ? "positive" : "negative"}>{item.type === "deposit" ? "+ " : "− "}{formatMoney(item.amount_cents)}</b>
               <div className="row-actions">
                 {item.receipt_path && <button onClick={() => openReceipt(item.receipt_path!)} aria-label="Abrir comprovante"><Paperclip size={18} /></button>}
@@ -124,11 +131,11 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
           <header><h2 id="dialog-title">Nova transação</h2><button className="icon-button" onClick={() => setDialogOpen(false)} aria-label="Fechar"><X size={20} /></button></header>
           <form ref={formRef} onSubmit={submit}>
             <div className="form-grid">
-              <label>Tipo<select name="type"><option value="deposit">Depósito</option><option value="expense">Despesa</option></select></label>
-              <label>Nome<input name="name" required maxLength={120} placeholder="Ex.: Pagamento recebido" /></label>
-              <label>Data<input name="date" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} /></label>
-              <label>Valor<input name="amount" required inputMode="decimal" placeholder="0,00" /></label>
-              <label className="wide-field">Comprovante opcional<input name="receipt" type="file" accept="application/pdf,image/jpeg,image/png" /></label>
+              <label>Tipo <span className="required">obrigatório</span><select name="type"><option value="deposit">Depósito</option><option value="expense">Despesa</option></select></label>
+              <label>Nome <span className="required">obrigatório</span><input name="name" required maxLength={120} placeholder="Ex.: Pagamento recebido" autoFocus /></label>
+              <label>Data <span className="required">obrigatório</span><input name="date" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} /></label>
+              <label>Valor <span className="required">obrigatório</span><div className="money-input"><span>R$</span><input name="amount" required inputMode="decimal" placeholder="0,00" /></div></label>
+              <label className="wide-field">Comprovante <span className="optional">opcional · PDF, JPG ou PNG até 10 MB</span><input name="receipt" type="file" accept="application/pdf,image/jpeg,image/png" /></label>
             </div>
             <footer><button type="button" className="secondary-button" onClick={() => setDialogOpen(false)}>Cancelar</button><button className="primary-button" disabled={busy}>Salvar transação</button></footer>
           </form>
