@@ -294,10 +294,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
       <header className="topbar">
         <div className="brand">
           <span className="logo-mark" aria-hidden="true" />
-          <div>
-            <strong>Instituto Pio XII</strong>
-            <small>Portal da Transparência Escolar</small>
-          </div>
+          <strong>Portal da Transparência</strong>
         </div>
         {manager ? (
           <div className="manager-session">
