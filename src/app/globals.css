@@ -769,6 +769,7 @@ h1 { font-size: clamp(36px,4vw,52px); font-weight: 500; letter-spacing:-.055em; 
 .primary-button, .secondary-button, .deposit-button, .expense-button { border-radius: 7px; box-shadow:none; font-weight:650; }
 .deposit-button { background: var(--brand); }
 .expense-button { border-color:#f0cce1; color:#b70073; background:#fff8fc; }
+.expense-button { border-color:#f4c4c4; color:#b42318; background:#fff5f5; }
 .summary-card, .transactions-panel, .modal { border-radius: 12px; box-shadow: 0 10px 30px rgba(23,81,108,.05); }
 .balance-card { background: #102a3a; border-color:#102a3a; box-shadow:none; }
 .summary-card > span, .movement-card > div > span { font-size:11px; letter-spacing:.1em; }
@@ -783,12 +784,12 @@ h1 { font-size: clamp(36px,4vw,52px); font-weight: 500; letter-spacing:-.055em; 
 .tabs { background:#eef5f7; }
 .tabs button.active, .filter-pill.active { color:#fff; background:var(--ink); box-shadow:none; }
 .filter-pill.deposit-pill.active { background:var(--brand); border-color:var(--brand); }
-.filter-pill.expense-pill.active { background:#b70073; border-color:#b70073; }
+.filter-pill.expense-pill.active { background:#c7353c; border-color:#c7353c; }
 .transaction-row { grid-template-columns: 76px minmax(180px,1fr) 130px 145px 122px; padding:18px 24px; }
 .transaction-row:hover { background:#f8fcfd; }
 .transaction-kind { display:inline-flex; width:max-content; padding:5px 8px; border-radius:4px; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
 .transaction-kind.deposit { color:#0870ad; background:#e8f7fd; }
-.transaction-kind.expense { color:#b70073; background:#fff0f8; }
+.transaction-kind.expense { color:#b42318; background:#fff0f0; }
 .transaction-details { gap:8px; }
 .receipt-badge { border-radius:4px; padding:3px 6px; font-size:11px; }
 .desktop-time { font-variant-numeric: tabular-nums; }
@@ -803,3 +804,9 @@ h1 { font-size: clamp(36px,4vw,52px); font-weight: 500; letter-spacing:-.055em; 
 .selected-type .summary-icon { display:none; }
 .modal > header { padding:20px 22px; }
 @media (max-width: 720px) { .transaction-row { grid-template-columns: 58px minmax(0,1fr) auto; } .transaction-kind { font-size:9px; padding:4px 5px; } .row-actions { grid-column:2 / -1; } }
+.audit-modal { width:min(520px, 100%); }
+.audit-list { padding:8px 22px 22px; }
+.audit-item { padding:16px 0; display:grid; grid-template-columns:1fr auto; gap:4px 16px; border-bottom:1px solid var(--line); }
+.audit-item strong { font-size:14px; }
+.audit-item span, .audit-item time { color:var(--muted); font-size:13px; }
+.audit-item time { grid-column:2; grid-row:1 / span 2; align-self:center; font-variant-numeric:tabular-nums; }

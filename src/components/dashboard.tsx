@@ -22,6 +22,7 @@ type Transaction = {
 };
 
 type Manager = { id: string; display_name: string };
+type AuditItem = { actor_name: string; action: "created" | "deleted" | "restored"; happened_at: string };
 
 const STORAGE_KEY = "caixa_manager_session_v1";
 
@@ -29,6 +30,9 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
   const [transactions, setTransactions] = useState(initialTransactions);
   const [showDeleted, setShowDeleted] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [auditItems, setAuditItems] = useState<AuditItem[]>([]);
+  const [auditTitle, setAuditTitle] = useState("");
   const [authOpen, setAuthOpen] = useState(false);
   const [authError, setAuthError] = useState("");
   const [showPin, setShowPin] = useState(false);
@@ -289,6 +293,17 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
     }
   }
 
+  async function openAudit(item: Transaction) {
+    if (!manager) return;
+    setBusy(true);
+    const { data, error } = await supabase.schema("caixa").rpc("get_transaction_audit", {
+      p_manager_id: manager.id, p_pin: managerPin, p_transaction_id: item.id,
+    });
+    setBusy(false);
+    if (error) { setMessageType("error"); setMessage(error.message); return; }
+    setAuditTitle(item.name); setAuditItems(data ?? []); setAuditOpen(true);
+  }
+
   return (
     <div className={busy ? "app-shell busy" : "app-shell"}>
       <header className="topbar">
@@ -525,6 +540,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                   </b>
 
                   <div className="row-actions">
+                    {manager && <button className="action-btn" onClick={() => openAudit(item)}>Histórico</button>}
                     {manager && (
                       <button
                         className={`action-btn ${item.deleted_at ? "restore" : "delete"}`}
@@ -542,6 +558,12 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
           )}
         </section>
       </main>
+      {auditOpen && <div className="modal-backdrop" onMouseDown={() => setAuditOpen(false)}>
+        <section className="modal audit-modal" role="dialog" aria-modal="true" aria-labelledby="audit-title" onMouseDown={(event) => event.stopPropagation()}>
+          <header><div><span className="eyebrow">Rastreabilidade</span><h2 id="audit-title">Histórico: {auditTitle}</h2></div><button className="icon-button" onClick={() => setAuditOpen(false)}>Fechar</button></header>
+          <div className="audit-list">{auditItems.length ? auditItems.map((entry, index) => <article className="audit-item" key={`${entry.happened_at}-${index}`}><strong>{entry.action === "created" ? "Registro criado" : entry.action === "deleted" ? "Movido para excluídas" : "Registro restaurado"}</strong><span>por {entry.actor_name}</span><time>{formatDateTime(entry.happened_at)}</time></article>) : <p>Nenhum evento registrado.</p>}</div>
+        </section>
+      </div>}
 
       {/* Modal de Autenticação / Área da Gestão */}
       {authOpen && (
