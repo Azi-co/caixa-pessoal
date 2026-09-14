@@ -68,21 +68,42 @@ input:focus, select:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba
 .setup-card .logo-mark { margin-bottom:20px; }
 .setup-card code { padding:2px 5px; border-radius:5px; background:#edf1ee; }
 @media (max-width:720px) {
+  .topbar { height:62px; padding:0 16px; }
+  .brand { font-size:18px; }
+  .logo-mark { width:34px; height:34px; border-radius:9px; }
   .user-area span { display:none; }
-  .dashboard { margin:23px auto; }
-  .dashboard-heading { align-items:flex-start; }
+  .dashboard { width:100%; margin:0; padding:20px 14px 28px; }
+  .dashboard-heading { align-items:flex-start; margin-bottom:18px; }
   .dashboard-heading p { display:none; }
-  .summary-grid { grid-template-columns:1fr; gap:10px; }
-  .summary-card { padding:17px; }
+  h1 { font-size:29px; }
+  .summary-grid { grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .summary-card { min-width:0; padding:15px; border-radius:12px; }
+  .summary-card:first-child { grid-column:1 / -1; padding:19px; }
+  .summary-card span { margin-bottom:6px; font-size:13px; }
+  .summary-card strong { font-size:20px; white-space:nowrap; }
+  .summary-card:first-child strong { font-size:27px; }
+  .transactions-panel { border-radius:12px; }
   .transaction-row { grid-template-columns:1fr auto; gap:9px; }
   .transaction-row time { display:none; }
   .transaction-row > b { align-self:start; }
-  .row-actions { grid-column:1 / -1; justify-content:flex-start; }
+  .row-actions { grid-column:1 / -1; justify-content:flex-end; margin-top:-4px; }
   .form-grid { grid-template-columns:1fr; }
   .wide-field { grid-column:auto; }
+  .modal-backdrop { align-items:end; padding:0; }
+  .modal { width:100%; max-height:92vh; overflow:auto; border-radius:18px 18px 0 0; }
+  .modal form { padding:18px 16px calc(18px + env(safe-area-inset-bottom)); }
 }
 @media (max-width:480px) {
   .dashboard-heading { display:grid; }
   .dashboard-heading .primary-button { width:100%; }
-  .transactions-panel > header { align-items:flex-start; flex-direction:column; }
+  .transactions-panel > header { min-height:auto; padding:14px; align-items:center; }
+  .transactions-panel h2 { font-size:18px; }
+  .tabs button { padding:7px 9px; font-size:14px; }
+  .transaction-row { min-height:0; padding:14px; }
+  .transaction-row > div:first-child { min-width:0; }
+  .transaction-row strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .transaction-row > b { font-size:14px; white-space:nowrap; }
+  .row-actions button { width:44px; height:40px; }
+  .modal footer { display:grid; grid-template-columns:1fr 1fr; }
+  .modal footer button { width:100%; }
 }
