@@ -149,7 +149,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
   return (
     <div className={busy ? "app-shell busy" : "app-shell"}>
       <header className="topbar">
-        <div className="brand"><span className="logo-mark"><Wallet size={21} /></span><span><strong>Instituto Pio XII</strong><small>São José de Mipibu · RN</small></span></div>
+        <div className="brand"><span className="logo-mark"><Wallet size={21} /></span><span>Portal da Transparência</span></div>
         {manager ? <div className="manager-session"><span><ShieldCheck size={16} /> {manager.display_name}</span><button onClick={logout} aria-label="Sair da área de gestão"><LogOut size={17} /></button></div> : <button className="management-button" onClick={() => setAuthOpen(true)}><ShieldCheck size={17} /> Área da gestão</button>}
       </header>
       <main className="dashboard">

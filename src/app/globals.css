@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #32151a;
-  --muted: #76666a;
-  --green: #730016;
-  --lime: #d8ac36;
-  --lime-soft: #fff4d7;
+  --ink: #173242;
+  --muted: #657984;
+  --green: #167fc0;
+  --lime: #27b9ea;
+  --lime-soft: #e2f7fd;
   --red: #c7353c;
   --red-soft: #fff0f0;
   --line: rgba(14, 15, 12, .12);
   --surface: #fff;
-  --page: #fbf7f4;
+  --page: #f5fbfd;
 }
 
 * { box-sizing: border-box; }
 html { background: var(--page); }
-body { margin: 0; color: var(--ink); background: radial-gradient(circle at 8% 0%, #fff0e8 0, transparent 27rem), var(--page); font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-feature-settings: "calt"; }
+body { margin: 0; color: var(--ink); background: radial-gradient(circle at 8% 0%, #e9f9ff 0, transparent 27rem), var(--page); font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-feature-settings: "calt"; }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(22, 51, 0, .2); outline-offset: 2px; }
@@ -24,11 +24,9 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .app-shell.busy .primary-button, .app-shell.busy .row-actions { pointer-events: none; opacity: .65; }
 
 .topbar { height: 72px; padding: 0 max(4vw, 22px); display: flex; align-items: center; justify-content: space-between; gap: 20px; background: rgba(255,255,255,.88); border-bottom: 1px solid var(--line); backdrop-filter: blur(16px); }
-.brand { display: flex; align-items: center; gap: 11px; color: var(--green); font-size: 18px; font-weight: 800; letter-spacing: -.03em; }
-.brand strong, .brand small { display: block; }
-.brand small { margin-top: 2px; color: #8b6a34; font-size: 10px; font-weight: 700; letter-spacing: .055em; text-transform: uppercase; }
-.logo-mark { width: 42px; height: 42px; display: inline-grid; place-items: center; border: 3px solid #fff; border-radius: 50%; color: #fff; background: var(--green); box-shadow: 0 0 0 2px var(--lime), 0 0 0 4px #ef8714; }
-.management-button { min-height: 40px; padding: 8px 13px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid #e4d2d0; border-radius: 999px; color: var(--green); background: #fff; font-size: 13px; font-weight: 750; }
+.brand { display: flex; align-items: center; gap: 11px; color: #187fb9; font-size: 19px; font-weight: 800; letter-spacing: -.03em; }
+.logo-mark { width: 42px; height: 42px; display: inline-grid; place-items: center; border: 3px solid #fff; border-radius: 50%; color: #fff; background: linear-gradient(135deg, #36c8ef, #167fc0); box-shadow: 0 0 0 2px #f7b600, 0 0 0 4px #ff6b16, 0 0 0 6px #e6008c; }
+.management-button { min-height: 40px; padding: 8px 13px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid #cce9f4; border-radius: 999px; color: var(--green); background: #fff; font-size: 13px; font-weight: 750; }
 .manager-session { display: flex; align-items: center; gap: 5px; }
 .manager-session span { padding: 8px 11px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; color: var(--green); background: var(--lime-soft); font-size: 13px; font-weight: 750; }
 .manager-session button { width: 38px; height: 38px; display: grid; place-items: center; border: 0; border-radius: 50%; color: var(--muted); background: transparent; }
@@ -36,7 +34,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 
 .dashboard { width: min(1120px, 92vw); margin: 42px auto 64px; }
 .dashboard-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 28px; }
-.eyebrow { display: block; margin-bottom: 7px; color: #a56b10; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.eyebrow { display: block; margin-bottom: 7px; color: #168dc7; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 h1 { margin: 0 0 7px; font-size: clamp(34px, 4vw, 48px); line-height: 1; letter-spacing: -.055em; }
 h2 { margin: 0; }
 p { margin: 0; color: var(--muted); }
@@ -50,7 +48,7 @@ p { margin: 0; color: var(--muted); }
 .transaction-buttons, .empty-actions { display: flex; align-items: center; gap: 10px; }
 .deposit-button, .expense-button { min-height: 46px; padding: 11px 17px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; font-weight: 750; transition: transform .18s ease, filter .18s ease; }
 .deposit-button { border: 0; color: #fff; background: var(--green); }
-.expense-button { border: 1px solid #e6c98e; color: #81530a; background: #fff5de; }
+.expense-button { border: 1px solid #ffd2e8; color: #b9006f; background: #fff1f8; }
 .deposit-button:hover, .expense-button:hover { transform: scale(1.025); filter: brightness(.98); }
 .deposit-button:active, .expense-button:active { transform: scale(.98); }
 .deposit-button.compact, .expense-button.compact { min-height: 42px; padding: 9px 15px; }
@@ -66,16 +64,16 @@ p { margin: 0; color: var(--muted); }
 .summary-card { min-height: 150px; padding: 24px; }
 .summary-card > span, .movement-card > div > span { display: block; margin-bottom: 10px; color: var(--muted); font-size: 14px; font-weight: 650; }
 .summary-card strong { display: block; font-size: clamp(24px, 3vw, 34px); letter-spacing: -.045em; }
-.balance-card { color: #fff; background: linear-gradient(135deg, #7b0019, #56000e); border-color: #650012; }
+.balance-card { color: #fff; background: linear-gradient(135deg, #26bfea, #1378ba); border-color: #167fc0; }
 .balance-card > span { color: rgba(255,255,255,.68); }
 .balance-card strong { font-size: clamp(31px, 4vw, 44px); }
 .balance-card small { display: block; margin-top: 18px; color: rgba(255,255,255,.58); font-size: 12px; }
 .movement-card { display: flex; align-items: flex-start; gap: 14px; }
 .summary-icon, .transaction-icon, .empty-icon { flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; }
 .summary-icon { width: 42px; height: 42px; }
-.summary-icon.deposit, .transaction-icon.deposit { color: #730016; background: #fff0e7; }
-.summary-icon.expense, .transaction-icon.expense { color: #81530a; background: #fff4d7; }
-.positive { color: #730016; }
+.summary-icon.deposit, .transaction-icon.deposit { color: #167fc0; background: #e2f7fd; }
+.summary-icon.expense, .transaction-icon.expense { color: #b9006f; background: #fff1f8; }
+.positive { color: #167fc0; }
 .negative { color: var(--red); }
 
 .transactions-panel { overflow: hidden; }
@@ -118,14 +116,14 @@ p { margin: 0; color: var(--muted); }
 label { display: block; color: #374337; font-size: 14px; font-weight: 750; }
 .required, .optional { float: right; color: #899189; font-size: 11px; font-weight: 500; }
 input, select { width: 100%; min-height: 47px; margin-top: 7px; padding: 10px 13px; border: 1px solid #cbd3c8; border-radius: 12px; color: var(--ink); background: #fff; outline: none; }
-input:focus, select:focus { border-color: #8c1830; box-shadow: 0 0 0 3px rgba(216,172,54,.32); }
+input:focus, select:focus { border-color: #168dc7; box-shadow: 0 0 0 3px rgba(39,185,234,.26); }
 .money-input { position: relative; }
 .money-input > span { position: absolute; z-index: 1; left: 13px; top: 22px; color: var(--muted); font-weight: 600; }
 .money-input input { padding-left: 40px; }
 .wide-field { grid-column: 1 / -1; }
 .selected-type { grid-column: 1 / -1; padding: 13px 15px; display: flex; align-items: center; gap: 11px; border-radius: 14px; }
-.selected-type.deposit { color: #730016; background: #fff0e7; }
-.selected-type.expense { color: #81530a; background: #fff4d7; }
+.selected-type.deposit { color: #167fc0; background: #e2f7fd; }
+.selected-type.expense { color: #b9006f; background: #fff1f8; }
 .selected-type .summary-icon { width: 38px; height: 38px; margin: 0; color: inherit; background: rgba(255,255,255,.7); }
 .selected-type small, .selected-type strong { display: block; }
 .selected-type small { margin-bottom: 2px; opacity: .7; }

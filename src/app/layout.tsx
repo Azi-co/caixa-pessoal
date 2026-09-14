@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Portal da Transparência | Instituto Pio XII",
-  description: "Consulta de depósitos, despesas e comprovantes do Instituto Pio XII.",
+  title: "Portal da Transparência",
+  description: "Consulta de depósitos, despesas e comprovantes.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
