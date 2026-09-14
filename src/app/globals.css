@@ -26,7 +26,11 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .topbar { height: 72px; padding: 0 max(4vw, 22px); display: flex; align-items: center; justify-content: space-between; gap: 20px; background: rgba(255,255,255,.88); border-bottom: 1px solid var(--line); backdrop-filter: blur(16px); }
 .brand { display: flex; align-items: center; gap: 11px; color: var(--green); font-size: 20px; font-weight: 800; letter-spacing: -.03em; }
 .logo-mark { width: 40px; height: 40px; display: inline-grid; place-items: center; border-radius: 13px; color: var(--green); background: var(--lime); }
-.privacy-label { padding: 7px 12px; border-radius: 999px; color: var(--muted); background: #eef0eb; font-size: 13px; font-weight: 650; }
+.management-button { min-height: 40px; padding: 8px 13px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--green); background: #fff; font-size: 13px; font-weight: 750; }
+.manager-session { display: flex; align-items: center; gap: 5px; }
+.manager-session span { padding: 8px 11px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; color: var(--green); background: var(--lime-soft); font-size: 13px; font-weight: 750; }
+.manager-session button { width: 38px; height: 38px; display: grid; place-items: center; border: 0; border-radius: 50%; color: var(--muted); background: transparent; }
+.manager-session button:hover { background: #edf0e9; }
 
 .dashboard { width: min(1120px, 92vw); margin: 42px auto 64px; }
 .dashboard-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 28px; }
@@ -85,9 +89,10 @@ p { margin: 0; color: var(--muted); }
 .transaction-row:hover { background: #fafbf8; }
 .transaction-icon { width: 40px; height: 40px; }
 .transaction-copy { min-width: 0; }
-.transaction-copy strong, .transaction-copy span { display: block; }
+.transaction-copy strong, .transaction-copy span, .transaction-copy small { display: block; }
 .transaction-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .transaction-copy span { margin-top: 5px; color: #788078; font-size: 13px; }
+.transaction-copy small { margin-top: 4px; color: #969d96; font-size: 11px; }
 .transaction-row time { display: flex; align-items: center; gap: 6px; color: #687168; font-size: 14px; }
 .transaction-row > b { text-align: right; white-space: nowrap; }
 .row-actions { display: flex; justify-content: flex-end; gap: 3px; }
@@ -125,6 +130,11 @@ input:focus, select:focus { border-color: #527d35; box-shadow: 0 0 0 3px rgba(15
 input[type="file"] { padding: 9px; color: var(--muted); font-size: 13px; }
 input[type="file"]::file-selector-button { margin-right: 10px; padding: 7px 11px; border: 0; border-radius: 8px; color: var(--green); background: var(--lime-soft); font-weight: 700; cursor: pointer; }
 .modal footer { margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px; }
+.auth-modal { width: min(440px, 100%); }
+.auth-modal > header { align-items: flex-start; }
+.auth-modal .eyebrow { margin-bottom: 5px; }
+.auth-modal form > p { margin-bottom: 20px; font-size: 14px; }
+.auth-fields { display: grid; gap: 16px; }
 
 @media (max-width: 800px) {
   .summary-grid { grid-template-columns: 1fr 1fr; }
@@ -137,7 +147,8 @@ input[type="file"]::file-selector-button { margin-right: 10px; padding: 7px 11px
   .topbar { height: 62px; padding: 0 15px; }
   .brand { font-size: 17px; }
   .logo-mark { width: 35px; height: 35px; border-radius: 11px; }
-  .privacy-label { padding: 6px 9px; font-size: 11px; }
+  .management-button { padding: 7px 10px; font-size: 12px; }
+  .manager-session span { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
   .dashboard { width: 100%; margin: 0; padding: 22px 14px 30px; }
   .dashboard-heading { display: grid; align-items: start; margin-bottom: 20px; }
   .dashboard-heading p { display: none; }

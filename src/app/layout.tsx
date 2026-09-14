@@ -13,14 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Caixa Pessoal",
-  description: "Controle simples de depósitos, despesas e comprovantes.",
+  title: "Portal da Transparência Escolar",
+  description: "Consulta de depósitos, despesas e comprovantes da comunidade escolar.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
+      lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
