@@ -525,16 +525,6 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                   </b>
 
                   <div className="row-actions">
-                    {item.receipt_path && (
-                      <button
-                        className="action-btn"
-                        onClick={() => openReceipt(item.receipt_path!)}
-                        aria-label="Abrir comprovante"
-                        title="Ver comprovante"
-                      >
-                        Ver
-                      </button>
-                    )}
                     {manager && (
                       <button
                         className={`action-btn ${item.deleted_at ? "restore" : "delete"}`}
