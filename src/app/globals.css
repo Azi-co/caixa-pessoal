@@ -41,6 +41,13 @@ p { margin: 0; color: var(--muted); }
 .primary-button:active, .secondary-button:active { transform: scale(.98); }
 .primary-button:disabled { cursor: wait; opacity: .65; }
 .secondary-button { border: 1px solid var(--line); color: var(--green); background: #fff; }
+.transaction-buttons, .empty-actions { display: flex; align-items: center; gap: 10px; }
+.deposit-button, .expense-button { min-height: 46px; padding: 11px 17px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; font-weight: 750; transition: transform .18s ease, filter .18s ease; }
+.deposit-button { border: 0; color: var(--green); background: var(--lime); }
+.expense-button { border: 1px solid #efc6c9; color: #a32831; background: #fff2f2; }
+.deposit-button:hover, .expense-button:hover { transform: scale(1.025); filter: brightness(.98); }
+.deposit-button:active, .expense-button:active { transform: scale(.98); }
+.deposit-button.compact, .expense-button.compact { min-height: 42px; padding: 9px 15px; }
 .icon-button { width: 42px; height: 42px; display: grid; place-items: center; border: 0; border-radius: 50%; color: #536057; background: transparent; }
 .icon-button:hover { background: #eff3ed; }
 
@@ -90,7 +97,7 @@ p { margin: 0; color: var(--muted); }
 .empty-state .empty-icon { width: 52px; height: 52px; margin-bottom: 14px; color: var(--green); background: var(--lime-soft); }
 .empty-state strong { color: var(--ink); font-size: 18px; }
 .empty-state p { margin-top: 6px; font-size: 14px; }
-.empty-state button { margin-top: 20px; }
+.empty-actions { margin-top: 20px; }
 .loading-state { flex-direction: row; gap: 10px; font-size: 14px; }
 .spinner { width: 18px; height: 18px; border: 2px solid #d7ded4; border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -109,6 +116,12 @@ input:focus, select:focus { border-color: #527d35; box-shadow: 0 0 0 3px rgba(15
 .money-input > span { position: absolute; z-index: 1; left: 13px; top: 22px; color: var(--muted); font-weight: 600; }
 .money-input input { padding-left: 40px; }
 .wide-field { grid-column: 1 / -1; }
+.selected-type { grid-column: 1 / -1; padding: 13px 15px; display: flex; align-items: center; gap: 11px; border-radius: 14px; }
+.selected-type.deposit { color: #275b08; background: var(--lime-soft); }
+.selected-type.expense { color: #a62a32; background: #ffe8e9; }
+.selected-type .summary-icon { width: 38px; height: 38px; margin: 0; color: inherit; background: rgba(255,255,255,.7); }
+.selected-type small, .selected-type strong { display: block; }
+.selected-type small { margin-bottom: 2px; opacity: .7; }
 input[type="file"] { padding: 9px; color: var(--muted); font-size: 13px; }
 input[type="file"]::file-selector-button { margin-right: 10px; padding: 7px 11px; border: 0; border-radius: 8px; color: var(--green); background: var(--lime-soft); font-weight: 700; cursor: pointer; }
 .modal footer { margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px; }
@@ -128,7 +141,8 @@ input[type="file"]::file-selector-button { margin-right: 10px; padding: 7px 11px
   .dashboard { width: 100%; margin: 0; padding: 22px 14px 30px; }
   .dashboard-heading { display: grid; align-items: start; margin-bottom: 20px; }
   .dashboard-heading p { display: none; }
-  .dashboard-heading .primary-button { width: 100%; }
+  .transaction-buttons { display: grid; grid-template-columns: 1fr 1fr; }
+  .transaction-buttons button { width: 100%; padding-inline: 10px; }
   h1 { font-size: 34px; }
   .summary-grid { gap: 10px; margin-bottom: 14px; }
   .summary-card { min-height: 116px; padding: 17px; border-radius: 18px; }
@@ -153,6 +167,10 @@ input[type="file"]::file-selector-button { margin-right: 10px; padding: 7px 11px
   .wide-field { grid-column: auto; }
   .modal footer { display: grid; grid-template-columns: 1fr 1fr; }
   .modal footer button { width: 100%; padding-inline: 12px; }
+}
+
+@media (max-width: 380px) {
+  .transaction-buttons { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

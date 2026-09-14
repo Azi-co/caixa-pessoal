@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArchiveRestore, ArrowDownLeft, ArrowUpRight, CalendarDays, Paperclip, Plus, Trash2, Wallet, X } from "lucide-react";
+import { ArchiveRestore, ArrowDownLeft, ArrowUpRight, CalendarDays, Paperclip, Trash2, Wallet, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 type Transaction = {
@@ -20,6 +20,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
   const [transactions, setTransactions] = useState(initialTransactions);
   const [showDeleted, setShowDeleted] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [transactionType, setTransactionType] = useState<"deposit" | "expense">("deposit");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -33,6 +34,11 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
   const expenses = active.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount_cents, 0);
   const formatMoney = (cents: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
   const formatDate = (value: string) => new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
+
+  function openTransactionDialog(type: "deposit" | "expense") {
+    setTransactionType(type);
+    setDialogOpen(true);
+  }
 
   async function refresh() {
     const { data, error } = await supabase.schema("caixa").from("transactions").select("*").order("occurred_on", { ascending: false }).order("created_at", { ascending: false });
@@ -102,7 +108,10 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
       <main className="dashboard">
         <section className="dashboard-heading">
           <div><span className="eyebrow">Visão geral</span><h1>Meu caixa</h1><p>Entradas, despesas e comprovantes em um só lugar.</p></div>
-          <button className="primary-button" onClick={() => setDialogOpen(true)}><Plus size={20} /> Nova transação</button>
+          <div className="transaction-buttons">
+            <button className="deposit-button" onClick={() => openTransactionDialog("deposit")}><ArrowDownLeft size={20} /> Novo depósito</button>
+            <button className="expense-button" onClick={() => openTransactionDialog("expense")}><ArrowUpRight size={20} /> Nova despesa</button>
+          </div>
         </section>
         {message && <div className={`notice ${messageType}`} role={messageType === "error" ? "alert" : "status"}>{message}</div>}
         <section className="summary-grid">
@@ -112,7 +121,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
         </section>
         <section className="transactions-panel">
           <header><div><h2>Transações</h2><span className="panel-subtitle">{active.length} {active.length === 1 ? "registro ativo" : "registros ativos"}</span></div><div className="tabs"><button className={!showDeleted ? "active" : ""} onClick={() => setShowDeleted(false)}>Ativas <span>{active.length}</span></button><button className={showDeleted ? "active" : ""} onClick={() => setShowDeleted(true)}>Excluídas <span>{deleted.length}</span></button></div></header>
-          {loading ? <div className="loading-state"><span className="spinner" /> Carregando transações...</div> : !visible.length ? <div className="empty-state"><span className="empty-icon">{showDeleted ? <Trash2 size={24} /> : <Wallet size={24} />}</span><strong>{showDeleted ? "Nenhuma transação excluída" : "Seu caixa está vazio"}</strong><p>{showDeleted ? "As transações removidas aparecerão aqui." : "Registre seu primeiro depósito ou despesa."}</p>{!showDeleted && <button className="secondary-button" onClick={() => setDialogOpen(true)}><Plus size={18} /> Criar primeira transação</button>}</div> : visible.map((item) => (
+          {loading ? <div className="loading-state"><span className="spinner" /> Carregando transações...</div> : !visible.length ? <div className="empty-state"><span className="empty-icon">{showDeleted ? <Trash2 size={24} /> : <Wallet size={24} />}</span><strong>{showDeleted ? "Nenhuma transação excluída" : "Seu caixa está vazio"}</strong><p>{showDeleted ? "As transações removidas aparecerão aqui." : "Registre seu primeiro depósito ou despesa."}</p>{!showDeleted && <div className="empty-actions"><button className="deposit-button compact" onClick={() => openTransactionDialog("deposit")}><ArrowDownLeft size={18} /> Depósito</button><button className="expense-button compact" onClick={() => openTransactionDialog("expense")}><ArrowUpRight size={18} /> Despesa</button></div>}</div> : visible.map((item) => (
             <article className="transaction-row" key={item.id}>
               <span className={`transaction-icon ${item.type}`}>{item.type === "deposit" ? <ArrowDownLeft size={19} /> : <ArrowUpRight size={19} />}</span>
               <div className="transaction-copy"><strong>{item.name}</strong><span>{item.type === "deposit" ? "Depósito" : "Despesa"}{item.receipt_name ? " · com comprovante" : ""}</span></div>
@@ -128,10 +137,11 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
       </main>
       {dialogOpen && <div className="modal-backdrop" onMouseDown={() => setDialogOpen(false)}>
         <section className="modal" role="dialog" aria-modal="true" aria-labelledby="dialog-title" onMouseDown={(event) => event.stopPropagation()}>
-          <header><h2 id="dialog-title">Nova transação</h2><button className="icon-button" onClick={() => setDialogOpen(false)} aria-label="Fechar"><X size={20} /></button></header>
+          <header><h2 id="dialog-title">{transactionType === "deposit" ? "Novo depósito" : "Nova despesa"}</h2><button className="icon-button" onClick={() => setDialogOpen(false)} aria-label="Fechar"><X size={20} /></button></header>
           <form ref={formRef} onSubmit={submit}>
             <div className="form-grid">
-              <label>Tipo <span className="required">obrigatório</span><select name="type"><option value="deposit">Depósito</option><option value="expense">Despesa</option></select></label>
+              <input name="type" type="hidden" value={transactionType} />
+              <div className={`selected-type ${transactionType}`}><span className="summary-icon">{transactionType === "deposit" ? <ArrowDownLeft size={19} /> : <ArrowUpRight size={19} />}</span><div><small>Tipo da transação</small><strong>{transactionType === "deposit" ? "Depósito" : "Despesa"}</strong></div></div>
               <label>Nome <span className="required">obrigatório</span><input name="name" required maxLength={120} placeholder="Ex.: Pagamento recebido" autoFocus /></label>
               <label>Data <span className="required">obrigatório</span><input name="date" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} /></label>
               <label>Valor <span className="required">obrigatório</span><div className="money-input"><span>R$</span><input name="amount" required inputMode="decimal" placeholder="0,00" /></div></label>
