@@ -24,8 +24,6 @@ type Transaction = {
 type Manager = { id: string; display_name: string };
 type AuditItem = { actor_name: string; action: "created" | "deleted" | "restored"; happened_at: string };
 
-const STORAGE_KEY = "caixa_manager_session_v1";
-
 export function Dashboard({ initialTransactions }: { initialTransactions: Transaction[] }) {
   const [transactions, setTransactions] = useState(initialTransactions);
   const [showDeleted, setShowDeleted] = useState(false);
@@ -51,26 +49,6 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
 
   const formRef = useRef<HTMLFormElement>(null);
   const supabase = useMemo(() => createClient(), []);
-
-  // Restaurar sessão persistida do localStorage logo após montar no cliente
-  useEffect(() => {
-    let restoreTimer: number | undefined;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed?.manager?.id && parsed?.pin) {
-          restoreTimer = window.setTimeout(() => {
-            setManager(parsed.manager);
-            setManagerPin(parsed.pin);
-          }, 0);
-        }
-      }
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-    return () => { if (restoreTimer) window.clearTimeout(restoreTimer); };
-  }, []);
 
   const active = useMemo(() => transactions.filter((item) => !item.deleted_at), [transactions]);
   const deleted = useMemo(() => transactions.filter((item) => item.deleted_at), [transactions]);
@@ -127,13 +105,18 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
     setDialogOpen(true);
   }
 
-  async function refresh() {
-    const { data, error } = await supabase
-      .schema("caixa")
-      .from("transactions")
-      .select("*")
-      .order("occurred_on", { ascending: false })
-      .order("created_at", { ascending: false });
+  async function refresh(activeManager: Manager | null = manager, activePin = managerPin) {
+    const { data, error } = activeManager
+      ? await supabase.schema("caixa").rpc("list_transactions", {
+          p_manager_id: activeManager.id,
+          p_pin: activePin,
+        })
+      : await supabase
+          .schema("caixa")
+          .from("transactions_public")
+          .select("*")
+          .order("occurred_on", { ascending: false })
+          .order("created_at", { ascending: false });
     if (error) throw error;
     setTransactions(data ?? []);
   }
@@ -143,7 +126,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
       const [{ data, error }, { data: managerData }] = await Promise.all([
         supabase
           .schema("caixa")
-          .from("transactions")
+          .from("transactions_public")
           .select("*")
           .order("occurred_on", { ascending: false })
           .order("created_at", { ascending: false }),
@@ -180,11 +163,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
       const activeManager = managers.find((item) => item.id === managerId) ?? { id: managerId, display_name: String(data) };
       setManager(activeManager);
       setManagerPin(pin);
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ manager: activeManager, pin }));
-      } catch {
-        // ignora se localStorage estiver desabilitado
-      }
+      await refresh(activeManager, pin);
       setAuthOpen(false);
       setAuthError("");
       setMessageType("success");
@@ -193,15 +172,11 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
     setBusy(false);
   }
 
-  function logout() {
+  async function logout() {
     setManager(null);
     setManagerPin("");
     setShowDeleted(false);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignora
-    }
+    await refresh(null, "");
     setMessageType("success");
     setMessage("Você saiu da área de gestão.");
   }
@@ -214,16 +189,24 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
       const form = new FormData(event.currentTarget);
       const amount = Number(String(form.get("amount")).replace(/\./g, "").replace(",", "."));
       if (!Number.isFinite(amount) || amount <= 0) throw new Error("Informe um valor válido.");
+      if (!manager) throw new Error("Entre na área de gestão para continuar.");
       const id = crypto.randomUUID();
       const file = form.get("receipt") as File;
       let receiptPath: string | null = null;
       if (file?.size) {
         if (file.size > 10 * 1024 * 1024) throw new Error("O comprovante deve ter no máximo 10 MB.");
-        receiptPath = `${id}/${file.name}`;
+        const safeFileName = file.name.replace(/[\\/]/g, "_").replace(/\.\.+/g, ".").slice(-180);
+        receiptPath = `${id}/${safeFileName}`;
+        const { error: authorizationError } = await supabase.schema("caixa").rpc("authorize_receipt_upload", {
+          p_manager_id: manager.id,
+          p_pin: managerPin,
+          p_transaction_id: id,
+          p_receipt_path: receiptPath,
+        });
+        if (authorizationError) throw authorizationError;
         const { error } = await supabase.storage.from("caixa-files").upload(receiptPath, file);
         if (error) throw error;
       }
-      if (!manager) throw new Error("Entre na área de gestão para continuar.");
       const { error } = await supabase.schema("caixa").rpc("create_transaction", {
         p_manager_id: manager.id,
         p_pin: managerPin,
@@ -284,6 +267,18 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
   }
 
   async function openReceipt(path: string) {
+    if (manager) {
+      const { error: authorizationError } = await supabase.schema("caixa").rpc("authorize_receipt_read", {
+        p_manager_id: manager.id,
+        p_pin: managerPin,
+        p_receipt_path: path,
+      });
+      if (authorizationError) {
+        setMessageType("error");
+        setMessage(authorizationError.message);
+        return;
+      }
+    }
     const { data, error } = await supabase.storage.from("caixa-files").createSignedUrl(path, 60);
     if (error) {
       setMessageType("error");

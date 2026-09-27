@@ -17,13 +17,27 @@ Este aplicativo usa um espaço isolado dentro do Supabase compartilhado: schema 
 
 Pais e visitantes acessam o endereço sem login e podem consultar as transações ativas. A criação, exclusão e restauração ficam na **Área da gestão**, protegida por usuário e PIN individual. O banco registra o responsável, a ação e a data de cada alteração.
 
-Se a migration antiga com login já foi executada, aplique `supabase/migrations/002_remove_login.sql`. Em uma instalação nova, execute apenas `001_initial.sql`.
+Se a migration antiga com login já foi executada, aplique `supabase/migrations/002_remove_login.sql`. Em uma instalação nova, não execute a `002`.
 
-Para adicionar os campos de transparência, gestores, PINs e auditoria, execute também `supabase/migrations/003_transparency_fields.sql` no SQL Editor. A consulta gera e exibe os cinco PINs uma única vez; salve o resultado antes de fechar a tela.
+Em uma instalação nova, aplique `001_initial.sql`, `003_transparency_fields.sql`, `005_audit_history.sql`, `006_security_hardening.sql` e `007_enforce_security_hardening.sql`, nessa ordem. A `003` gera e exibe os cinco PINs uma única vez; salve o resultado antes de fechar a tela. A `004` é usada somente quando for necessário redefinir todos os PINs.
+
+## Endurecimento de segurança em produção
+
+As migrations `006` e `007` formam um rollout em duas etapas. Não execute as duas de uma vez no projeto que já está no ar.
+
+1. Faça um backup do banco.
+2. Execute apenas `supabase/migrations/006_security_hardening.sql`. Ela cria a visão pública, limita tentativas de PIN e prepara as autorizações de comprovantes sem remover os acessos usados pelo frontend antigo.
+3. Publique o frontend desta mesma versão e aguarde o workflow do GitHub Pages concluir.
+4. Valide a consulta pública, o login da gestão, a criação sem e com comprovante, a leitura de comprovantes e a lixeira.
+5. Execute `supabase/migrations/007_enforce_security_hardening.sql`. Ela revoga a leitura da tabela bruta e remove as políticas anônimas antigas do bucket.
+6. Repita a validação e confirme que o domínio está forçando HTTPS no GitHub Pages.
+
+Até a etapa 5, o acesso antigo continua aberto para permitir rollback do frontend sem indisponibilidade. Depois da `007`, não reverta o frontend para uma versão anterior.
 
 ## Verificação
 
 ```powershell
+node --test tests/security-hardening.test.mjs
 npm.cmd run lint
 npm.cmd run build
 ```
