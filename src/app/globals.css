@@ -756,11 +756,11 @@ input[type="file"]::file-selector-button {
 :root { --ink:#102a3a; --muted:#607480; --brand:#1494cf; --brand-dark:#0870ad; --gold:#f7bb1c; --gold-soft:#fff7df; --line:#dcebf1; --page:#f7fbfd; }
 body { background: linear-gradient(180deg, #fff 0 18rem, var(--page) 18rem); }
 .topbar { height: 76px; border-bottom-color: var(--line); background: rgba(255,255,255,.96); }
-.brand { color: var(--ink); font-size: 17px; letter-spacing: -.025em; }
-.brand strong { color: var(--ink); font-size: 17px; }
-.brand small { color: var(--brand); letter-spacing: .08em; }
-.logo-mark { width: 30px; height: 30px; border: 0; background: conic-gradient(from 210deg, #f7bb1c, #ff7518, #ec008c, #1494cf, #f7bb1c); box-shadow: none; }
-.logo-mark::after { content:""; width: 20px; height: 20px; border-radius:50%; background:#fff; }
+.school-logo { height: 42px; width: auto; object-fit: contain; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-text { display: flex; flex-direction: column; }
+.brand-text strong { color: var(--ink); font-size: 15px; font-weight: 750; line-height: 1.15; }
+.brand-text small { color: var(--brand); font-size: 10px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; }
 .management-button, .manager-session span { border-radius: 7px; border-color: var(--line); color: var(--ink); background:#fff; font-weight:650; }
 .manager-session button { width:auto; padding:0 8px; color:var(--muted); font-size:12px; }
 .dashboard { margin-top: 52px; }

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import cnspLogo from "@/assets/cnsp-logo.png";
 
 type Transaction = {
   id: string;
@@ -438,8 +439,16 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
     <div className={busy ? "app-shell busy" : "app-shell"}>
       <header className="topbar">
         <div className="brand">
-          <span className="logo-mark" aria-hidden="true" />
-          <strong>Portal da Transparência</strong>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={cnspLogo.src}
+            alt="CNSP - Colégio N. Sra. dos Prazeres"
+            className="school-logo"
+          />
+          <div className="brand-text">
+            <strong>Colégio N. Sra. dos Prazeres</strong>
+            <small>Portal da Transparência</small>
+          </div>
         </div>
         {manager ? (
           <div className="manager-session">
@@ -466,9 +475,9 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
       <main className="dashboard">
         <section className="dashboard-heading">
           <div>
-            <span className="eyebrow">Prestação de Contas</span>
-            <h1>Caixa Escolar</h1>
-            <p>Acompanhe depósitos, despesas e comprovantes com total transparência.</p>
+            <span className="eyebrow">Prestação de Contas Oficial</span>
+            <h1>Caixa do Projeto</h1>
+            <p>Acompanhe depósitos, despesas e comprovantes do CNSP com total transparência.</p>
           </div>
           {manager && (
             <div className="transaction-buttons">
