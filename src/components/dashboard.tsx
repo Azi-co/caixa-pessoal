@@ -805,6 +805,35 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
           )}
         </section>
       </main>
+
+      <footer className="app-footer">
+        <div className="footer-content">
+          <div className="footer-brand">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={cnspLogo.src} alt="CNSP" className="footer-logo" />
+            <div>
+              <strong>Colégio Nossa Senhora dos Prazeres</strong>
+              <p>Portal da Transparência · Prestação de Contas do Projeto</p>
+            </div>
+          </div>
+
+          <div className="footer-meta">
+            <div className="footer-badge">
+              <span className="footer-badge-dot" />
+              <span>Transparência Ativa &amp; Registros Auditados</span>
+            </div>
+            <p className="footer-copy">
+              Todos os lançamentos, despesas e comprovantes são armazenados em ambiente seguro com rastreabilidade individual.
+            </p>
+          </div>
+        </div>
+
+        <div className="footer-bottom">
+          <small>© {new Date().getFullYear()} Colégio N. Sra. dos Prazeres. Todos os direitos reservados.</small>
+          <small className="footer-tech">Tecnologia e Governança Azilab</small>
+        </div>
+      </footer>
+
       {auditOpen && <div className="modal-backdrop" onMouseDown={() => setAuditOpen(false)}>
         <section className="modal audit-modal" role="dialog" aria-modal="true" aria-labelledby="audit-title" onMouseDown={(event) => event.stopPropagation()}>
           <header><div><span className="eyebrow">Rastreabilidade</span><h2 id="audit-title">Histórico: {auditTitle}</h2></div><button className="icon-button" onClick={() => setAuditOpen(false)}>Fechar</button></header>
