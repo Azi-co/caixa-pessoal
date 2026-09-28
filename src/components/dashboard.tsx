@@ -22,12 +22,13 @@ type Transaction = {
 };
 
 type Manager = { id: string; display_name: string };
-type AuditItem = { actor_name: string; action: "created" | "deleted" | "restored"; happened_at: string };
+type AuditItem = { actor_name: string; action: "created" | "deleted" | "restored" | "updated"; happened_at: string };
 
 export function Dashboard({ initialTransactions }: { initialTransactions: Transaction[] }) {
   const [transactions, setTransactions] = useState(initialTransactions);
   const [showDeleted, setShowDeleted] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<Transaction | null>(null);
   const [auditOpen, setAuditOpen] = useState(false);
   const [auditItems, setAuditItems] = useState<AuditItem[]>([]);
   const [auditTitle, setAuditTitle] = useState("");
@@ -299,6 +300,115 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
     setAuditTitle(item.name); setAuditItems(data ?? []); setAuditOpen(true);
   }
 
+  function openEditDialog(item: Transaction) {
+    if (!manager) {
+      setAuthError("");
+      setAuthOpen(true);
+      return;
+    }
+    setEditingItem(item);
+  }
+
+  async function submitEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingItem || !manager) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const form = new FormData(event.currentTarget);
+      const amount = Number(String(form.get("amount")).replace(/\./g, "").replace(",", "."));
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error("Informe um valor válido.");
+
+      const { error } = await supabase.schema("caixa").rpc("update_transaction", {
+        p_manager_id: manager.id,
+        p_pin: managerPin,
+        p_transaction_id: editingItem.id,
+        p_name: String(form.get("name")).trim(),
+        p_occurred_on: form.get("date"),
+        p_amount_cents: Math.round(amount * 100),
+        p_student_name: editingItem.type === "deposit" ? String(form.get("student_name")).trim() : null,
+        p_class_name: editingItem.type === "deposit" ? String(form.get("class_name")).trim() : null,
+        p_vendor_name: editingItem.type === "expense" ? String(form.get("vendor_name")).trim() : null,
+      });
+
+      if (error) throw error;
+
+      await refresh();
+      setEditingItem(null);
+      setMessageType("success");
+      setMessage("Transação atualizada com sucesso.");
+    } catch (error) {
+      setMessageType("error");
+      setMessage(error instanceof Error ? error.message : "Não foi possível atualizar a transação.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function exportCsv() {
+    if (!visible.length) {
+      setMessageType("error");
+      setMessage("Nenhuma transação visível para exportar.");
+      return;
+    }
+
+    const headers = manager
+      ? ["Data", "Tipo", "Descrição", "Aluno", "Turma", "Local/Fornecedor", "Valor (R$)", "Responsável", "Status"]
+      : ["Data", "Tipo", "Descrição", "Local/Fornecedor", "Valor (R$)"];
+
+    const escapeCsv = (val: string | null | undefined) => {
+      const s = String(val ?? "").trim();
+      if (s.includes(";") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    };
+
+    const rows = visible.map((item) => {
+      const date = formatDate(item.occurred_on);
+      const type = item.type === "deposit" ? "Depósito" : "Despesa";
+      const amount = (item.amount_cents / 100).toFixed(2).replace(".", ",");
+      const signedAmount = item.type === "deposit" ? amount : `-${amount}`;
+
+      if (manager) {
+        return [
+          date,
+          type,
+          escapeCsv(item.name),
+          escapeCsv(item.student_name),
+          escapeCsv(item.class_name),
+          escapeCsv(item.vendor_name),
+          signedAmount,
+          escapeCsv(item.created_by_name),
+          item.deleted_at ? "Excluída" : "Ativa",
+        ].join(";");
+      }
+
+      return [
+        date,
+        type,
+        escapeCsv(item.name),
+        escapeCsv(item.vendor_name),
+        signedAmount,
+      ].join(";");
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(";"), ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const today = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `extrato-caixa-escolar-${today}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setMessageType("success");
+    setMessage("Planilha CSV exportada com sucesso.");
+  }
+
   return (
     <div className={busy ? "app-shell busy" : "app-shell"}>
       <header className="topbar">
@@ -390,6 +500,13 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
             </div>
 
             <div className="panel-controls">
+              <button
+                className="export-button"
+                onClick={exportCsv}
+                title="Exportar dados visíveis para planilha CSV"
+              >
+                Exportar CSV
+              </button>
               {manager && (
                 <div className="tabs">
                   <button className={!showDeleted ? "active" : ""} onClick={() => setShowDeleted(false)}>
@@ -507,7 +624,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                           : item.vendor_name || "Despesa geral"}
                       </span>
 
-                      {item.receipt_path && (
+                      {item.receipt_path && (manager || item.type === "expense") && (
                         <button
                           className="receipt-badge"
                           onClick={() => openReceipt(item.receipt_path!)}
@@ -535,7 +652,16 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                   </b>
 
                   <div className="row-actions">
-                    {manager && <button className="action-btn" onClick={() => openAudit(item)}>Histórico</button>}
+                    {manager && !item.deleted_at && (
+                      <button
+                        className="action-btn edit"
+                        onClick={() => openEditDialog(item)}
+                        title="Editar transação"
+                      >
+                        Editar
+                      </button>
+                    )}
+                    {manager && <button className="action-btn" onClick={() => openAudit(item)} title="Ver histórico de auditoria">Histórico</button>}
                     {manager && (
                       <button
                         className={`action-btn ${item.deleted_at ? "restore" : "delete"}`}
@@ -556,7 +682,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
       {auditOpen && <div className="modal-backdrop" onMouseDown={() => setAuditOpen(false)}>
         <section className="modal audit-modal" role="dialog" aria-modal="true" aria-labelledby="audit-title" onMouseDown={(event) => event.stopPropagation()}>
           <header><div><span className="eyebrow">Rastreabilidade</span><h2 id="audit-title">Histórico: {auditTitle}</h2></div><button className="icon-button" onClick={() => setAuditOpen(false)}>Fechar</button></header>
-          <div className="audit-list">{auditItems.length ? auditItems.map((entry, index) => <article className="audit-item" key={`${entry.happened_at}-${index}`}><strong>{entry.action === "created" ? "Registro criado" : entry.action === "deleted" ? "Movido para excluídas" : "Registro restaurado"}</strong><span>por {entry.actor_name}</span><time>{formatDateTime(entry.happened_at)}</time></article>) : <p>Nenhum evento registrado.</p>}</div>
+          <div className="audit-list">{auditItems.length ? auditItems.map((entry, index) => <article className="audit-item" key={`${entry.happened_at}-${index}`}><strong>{entry.action === "created" ? "Registro criado" : entry.action === "deleted" ? "Movido para excluídas" : entry.action === "updated" ? "Registro alterado" : "Registro restaurado"}</strong><span>por {entry.actor_name}</span><time>{formatDateTime(entry.happened_at)}</time></article>) : <p>Nenhum evento registrado.</p>}</div>
         </section>
       </div>}
 
@@ -727,6 +853,116 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                 </button>
                 <button className="primary-button" disabled={busy}>
                   {busy ? "Salvando..." : "Salvar Transação"}
+                </button>
+              </footer>
+            </form>
+          </section>
+        </div>
+      )}
+
+      {/* Modal de Edição de Transação */}
+      {editingItem && (
+        <div className="modal-backdrop" onMouseDown={() => setEditingItem(null)}>
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-dialog-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header>
+              <h2 id="edit-dialog-title">{editingItem.type === "deposit" ? "Editar Depósito" : "Editar Despesa"}</h2>
+              <button className="icon-button" onClick={() => setEditingItem(null)} aria-label="Fechar">
+                Fechar
+              </button>
+            </header>
+
+            <form onSubmit={submitEdit}>
+              <div className="form-grid">
+                <div className={`selected-type ${editingItem.type}`}>
+                  <div>
+                    <small>Tipo de Registro</small>
+                    <strong>{editingItem.type === "deposit" ? "Depósito (Entrada)" : "Despesa (Saída)"}</strong>
+                  </div>
+                </div>
+
+                <label>
+                  Descrição <span className="required">obrigatório</span>
+                  <input
+                    name="name"
+                    required
+                    maxLength={120}
+                    defaultValue={editingItem.name}
+                    autoFocus
+                  />
+                </label>
+
+                {editingItem.type === "deposit" ? (
+                  <>
+                    <label>
+                      Nome do aluno <span className="required">obrigatório</span>
+                      <input
+                        name="student_name"
+                        required
+                        maxLength={120}
+                        defaultValue={editingItem.student_name ?? ""}
+                      />
+                    </label>
+                    <label>
+                      Turma / Ano <span className="required">obrigatório</span>
+                      <input
+                        name="class_name"
+                        required
+                        maxLength={80}
+                        defaultValue={editingItem.class_name ?? ""}
+                      />
+                    </label>
+                  </>
+                ) : (
+                  <label>
+                    Local ou fornecedor <span className="required">obrigatório</span>
+                    <input
+                      name="vendor_name"
+                      required
+                      maxLength={160}
+                      defaultValue={editingItem.vendor_name ?? ""}
+                    />
+                  </label>
+                )}
+
+                <label>
+                  Data da movimentação <span className="required">obrigatório</span>
+                  <input
+                    name="date"
+                    type="date"
+                    required
+                    defaultValue={editingItem.occurred_on}
+                  />
+                </label>
+
+                <label>
+                  Valor <span className="required">obrigatório</span>
+                  <div className="money-input">
+                    <span>R$</span>
+                    <input
+                      name="amount"
+                      required
+                      inputMode="decimal"
+                      defaultValue={(editingItem.amount_cents / 100).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    />
+                  </div>
+                </label>
+              </div>
+
+              <footer>
+                <button type="button" className="secondary-button" onClick={() => setEditingItem(null)}>
+                  Cancelar
+                </button>
+                <button className="primary-button" disabled={busy}>
+                  {busy ? "Salvando..." : "Salvar Alterações"}
                 </button>
               </footer>
             </form>

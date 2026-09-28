@@ -19,7 +19,7 @@ Pais e visitantes acessam o endereço sem login e podem consultar as transaçõe
 
 Se a migration antiga com login já foi executada, aplique `supabase/migrations/002_remove_login.sql`. Em uma instalação nova, não execute a `002`.
 
-Em uma instalação nova, aplique `001_initial.sql`, `003_transparency_fields.sql`, `005_audit_history.sql`, `006_security_hardening.sql` e `007_enforce_security_hardening.sql`, nessa ordem. A `003` gera e exibe os cinco PINs uma única vez; salve o resultado antes de fechar a tela. A `004` é usada somente quando for necessário redefinir todos os PINs.
+Em uma instalação nova, aplique `001_initial.sql`, `003_transparency_fields.sql`, `005_audit_history.sql`, `006_security_hardening.sql`, `007_enforce_security_hardening.sql` e `008_privacy_and_audit_fixes.sql`, nessa ordem. A `003` gera e exibe os cinco PINs uma única vez; salve o resultado antes de fechar a tela. A `004` é usada somente quando for necessário redefinir todos os PINs. A `008` protege comprovantes de depósito (LGPD), fecha search paths residuais e habilita edição de transações pelo gestor.
 
 ## Endurecimento de segurança em produção
 

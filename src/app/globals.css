@@ -785,7 +785,28 @@ h1 { font-size: clamp(36px,4vw,52px); font-weight: 500; letter-spacing:-.055em; 
 .tabs button.active, .filter-pill.active { color:#fff; background:var(--ink); box-shadow:none; }
 .filter-pill.deposit-pill.active { background:var(--brand); border-color:var(--brand); }
 .filter-pill.expense-pill.active { background:#c7353c; border-color:#c7353c; }
-.transaction-row { grid-template-columns: 76px minmax(180px,1fr) 130px 145px 122px; padding:18px 24px; }
+.panel-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.export-button {
+  height: 32px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.export-button:hover {
+  background: #f0f7fa;
+  border-color: var(--brand);
+  color: var(--brand-dark);
+}
+.transaction-row { grid-template-columns: 76px minmax(180px,1fr) 130px 145px 165px; padding:18px 24px; }
 .transaction-row:hover { background:#f8fcfd; }
 .transaction-kind { display:inline-flex; width:max-content; padding:5px 8px; border-radius:4px; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
 .transaction-kind.deposit { color:#0870ad; background:#e8f7fd; }
@@ -795,6 +816,7 @@ h1 { font-size: clamp(36px,4vw,52px); font-weight: 500; letter-spacing:-.055em; 
 .desktop-time { font-variant-numeric: tabular-nums; }
 .amount-display { font-variant-numeric: tabular-nums; }
 .action-btn { width:auto; height:30px; padding:0 7px; border-radius:4px; font-size:11px; color:var(--muted); }
+.action-btn.edit:hover { color: var(--brand); background: #e8f7fd; }
 .icon-button { width:auto; height:auto; padding:7px 9px; border-radius:5px; font-size:12px; font-weight:650; }
 .notice { border-radius:8px; }
 .notice-close { width:auto; height:auto; padding:4px 6px; border-radius:4px; font-size:11px; }

@@ -4,16 +4,18 @@ import test from "node:test";
 
 const prepareMigrationPath = new URL("../supabase/migrations/006_security_hardening.sql", import.meta.url);
 const enforceMigrationPath = new URL("../supabase/migrations/007_enforce_security_hardening.sql", import.meta.url);
+const privacyMigrationPath = new URL("../supabase/migrations/008_privacy_and_audit_fixes.sql", import.meta.url);
 const rollbackMigrationPath = new URL("../supabase/rollbacks/006_security_hardening_rollback.sql", import.meta.url);
 const dashboardPath = new URL("../src/components/dashboard.tsx", import.meta.url);
 const layoutPath = new URL("../src/app/layout.tsx", import.meta.url);
 
 async function readMigration() {
-  const [prepare, enforce] = await Promise.all([
+  const [prepare, enforce, privacy] = await Promise.all([
     readFile(prepareMigrationPath, "utf8"),
     readFile(enforceMigrationPath, "utf8"),
+    readFile(privacyMigrationPath, "utf8"),
   ]);
-  return `${prepare}\n${enforce}`;
+  return `${prepare}\n${enforce}\n${privacy}`;
 }
 
 test("security rollout remains compatible with the live frontend until enforcement", async () => {
@@ -131,4 +133,19 @@ test("production builds do not depend on downloading Google Fonts", async () => 
 
   assert.doesNotMatch(layout, /next\/font\/google/);
   assert.doesNotMatch(layout, /Geist(?:_Mono)?\s*\(/);
+});
+
+test("migration 008 hardens deposit receipt privacy and secures lingering search paths", async () => {
+  const privacySql = await readFile(privacyMigrationPath, "utf8");
+  const dashboard = await readFile(dashboardPath, "utf8");
+
+  assert.match(privacySql, /case\s+when\s+transactions\.type\s*=\s*'expense'\s+then\s+transactions\.receipt_path\s+else\s+null\s+end/i);
+  assert.match(privacySql, /function\s+caixa\.can_read_receipt[\s\S]*?type\s*=\s*'expense'/i);
+  assert.match(privacySql, /function\s+caixa\.set_transaction_deleted[\s\S]*?set\s+search_path\s*=\s*pg_catalog,\s*caixa,\s*extensions/i);
+  assert.match(privacySql, /function\s+caixa\.get_transaction_audit[\s\S]*?set\s+search_path\s*=\s*pg_catalog,\s*caixa,\s*extensions/i);
+  assert.match(privacySql, /function\s+caixa\.update_transaction[\s\S]*?set\s+search_path\s*=\s*pg_catalog,\s*caixa,\s*extensions/i);
+
+  assert.match(dashboard, /exportCsv\s*\(/);
+  assert.match(dashboard, /update_transaction/);
+  assert.match(dashboard, /openEditDialog/);
 });
