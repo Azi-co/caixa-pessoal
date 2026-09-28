@@ -48,6 +48,21 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "deposit" | "expense">("all");
 
+  // Usabilidade, paginação e modais
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  const [formAmount, setFormAmount] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState<Transaction | null>(null);
+  const [previewReceipt, setPreviewReceipt] = useState<{ url: string; name: string; isPdf: boolean } | null>(null);
+
+  function formatCurrencyDigits(digitsStr: string) {
+    const digits = digitsStr.replace(/\D/g, "");
+    if (!digits) return "";
+    const cents = parseInt(digits, 10);
+    return (cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
   const formRef = useRef<HTMLFormElement>(null);
   const supabase = useMemo(() => createClient(), []);
 
@@ -82,6 +97,13 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
     return list;
   }, [showDeleted, deleted, active, typeFilter, searchQuery]);
 
+  const totalPages = Math.max(1, Math.ceil(visible.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginated = useMemo(() => {
+    const start = (safeCurrentPage - 1) * pageSize;
+    return visible.slice(start, start + pageSize);
+  }, [visible, safeCurrentPage, pageSize]);
+
   const formatMoney = (cents: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
   const formatDate = (value: string) =>
@@ -103,6 +125,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
       return;
     }
     setTransactionType(type);
+    setFormAmount("");
     setDialogOpen(true);
   }
 
@@ -267,7 +290,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
     setBusy(false);
   }
 
-  async function openReceipt(path: string) {
+  async function openReceipt(path: string, receiptName?: string | null) {
     if (manager) {
       const { error: authorizationError } = await supabase.schema("caixa").rpc("authorize_receipt_read", {
         p_manager_id: manager.id,
@@ -285,7 +308,8 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
       setMessageType("error");
       setMessage(error.message);
     } else {
-      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      const isPdf = path.toLowerCase().endsWith(".pdf");
+      setPreviewReceipt({ url: data.signedUrl, name: receiptName || "Comprovante", isPdf });
     }
   }
 
@@ -307,6 +331,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
       return;
     }
     setEditingItem(item);
+    setEditAmount((item.amount_cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   }
 
   async function submitEdit(event: FormEvent<HTMLFormElement>) {
@@ -470,25 +495,45 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
 
         <section className="summary-grid">
           <article className="summary-card balance-card">
-            <span>Saldo em caixa</span>
+            <span className="card-tag">Disponibilidade</span>
             <strong>{formatMoney(deposits - expenses)}</strong>
             <small>Saldo líquido das transações ativas</small>
           </article>
-          <article className="summary-card movement-card">
+          <article className="summary-card movement-card deposit-summary">
             <div>
-              <span>Entradas (Depósitos)</span>
+              <span className="card-tag positive">Total Arrecadado</span>
               <strong className="positive">{formatMoney(deposits)}</strong>
-              <small>{active.filter((i) => i.type === "deposit").length} registros</small>
+              <small>{active.filter((i) => i.type === "deposit").length} depósitos registrados</small>
             </div>
           </article>
-          <article className="summary-card movement-card">
+          <article className="summary-card movement-card expense-summary">
             <div>
-              <span>Saídas (Despesas)</span>
+              <span className="card-tag negative">Total Investido/Gasto</span>
               <strong className="negative">{formatMoney(expenses)}</strong>
-              <small>{active.filter((i) => i.type === "expense").length} registros</small>
+              <small>{active.filter((i) => i.type === "expense").length} despesas registradas</small>
             </div>
           </article>
         </section>
+
+        {deposits > 0 && (
+          <section className="project-liquidity-card">
+            <div className="liquidity-info">
+              <div>
+                <span className="eyebrow-small">Balanço do Projeto</span>
+                <strong>
+                  {Math.max(0, Math.min(100, Math.round(((deposits - expenses) / deposits) * 100)))}% dos recursos continuam em caixa
+                </strong>
+              </div>
+              <span className="liquidity-meta">{active.length} movimentações registradas</span>
+            </div>
+            <div className="liquidity-bar-track">
+              <div
+                className="liquidity-bar-fill"
+                style={{ width: `${Math.max(0, Math.min(100, Math.round(((deposits - expenses) / deposits) * 100)))}%` }}
+              />
+            </div>
+          </section>
+        )}
 
         <section className="transactions-panel">
           <header className="panel-header">
@@ -509,10 +554,22 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
               </button>
               {manager && (
                 <div className="tabs">
-                  <button className={!showDeleted ? "active" : ""} onClick={() => setShowDeleted(false)}>
+                  <button
+                    className={!showDeleted ? "active" : ""}
+                    onClick={() => {
+                      setShowDeleted(false);
+                      setCurrentPage(1);
+                    }}
+                  >
                     Ativas <span>{active.length}</span>
                   </button>
-                  <button className={showDeleted ? "active" : ""} onClick={() => setShowDeleted(true)}>
+                  <button
+                    className={showDeleted ? "active" : ""}
+                    onClick={() => {
+                      setShowDeleted(true);
+                      setCurrentPage(1);
+                    }}
+                  >
                     Excluídas <span>{deleted.length}</span>
                   </button>
                 </div>
@@ -526,11 +583,21 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                 type="text"
                 placeholder="Buscar por aluno, descrição, turma ou fornecedor..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 aria-label="Buscar transações"
               />
               {searchQuery && (
-                <button className="clear-search" onClick={() => setSearchQuery("")} aria-label="Limpar busca">
+                <button
+                  className="clear-search"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setCurrentPage(1);
+                  }}
+                  aria-label="Limpar busca"
+                >
                   limpar
                 </button>
               )}
@@ -539,21 +606,30 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
             <div className="filter-pills">
               <button
                 className={`filter-pill ${typeFilter === "all" ? "active" : ""}`}
-                onClick={() => setTypeFilter("all")}
+                onClick={() => {
+                  setTypeFilter("all");
+                  setCurrentPage(1);
+                }}
               >
-                Todos
+                Todos ({visible.length})
               </button>
               <button
                 className={`filter-pill deposit-pill ${typeFilter === "deposit" ? "active" : ""}`}
-                onClick={() => setTypeFilter("deposit")}
+                onClick={() => {
+                  setTypeFilter("deposit");
+                  setCurrentPage(1);
+                }}
               >
-                Entradas
+                Entradas ({active.filter((i) => i.type === "deposit").length})
               </button>
               <button
                 className={`filter-pill expense-pill ${typeFilter === "expense" ? "active" : ""}`}
-                onClick={() => setTypeFilter("expense")}
+                onClick={() => {
+                  setTypeFilter("expense");
+                  setCurrentPage(1);
+                }}
               >
-                Saídas
+                Saídas ({active.filter((i) => i.type === "expense").length})
               </button>
             </div>
           </div>
@@ -603,7 +679,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
             </div>
           ) : (
             <div className="transaction-list">
-              {visible.map((item) => (
+              {paginated.map((item) => (
                 <article className="transaction-row" key={item.id}>
                   <span className={`transaction-icon ${item.type}`}>
                     {item.type === "deposit" ? "+" : "−"}
@@ -627,8 +703,8 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                       {item.receipt_path && (manager || item.type === "expense") && (
                         <button
                           className="receipt-badge"
-                          onClick={() => openReceipt(item.receipt_path!)}
-                          title="Clique para abrir o comprovante"
+                          onClick={() => openReceipt(item.receipt_path!, item.receipt_name || item.name)}
+                          title="Clique para visualizar o comprovante"
                         >
                           Ver comprovante
                         </button>
@@ -665,7 +741,7 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                     {manager && (
                       <button
                         className={`action-btn ${item.deleted_at ? "restore" : "delete"}`}
-                        onClick={() => toggleDeleted(item)}
+                        onClick={() => item.deleted_at ? void toggleDeleted(item) : setConfirmDeleteModal(item)}
                         aria-label={item.deleted_at ? "Restaurar" : "Excluir"}
                         title={item.deleted_at ? "Restaurar transação" : "Mover para lixeira"}
                       >
@@ -675,6 +751,47 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                   </div>
                 </article>
               ))}
+
+              {visible.length > pageSize && (
+                <footer className="pagination-bar">
+                  <span className="pagination-info">
+                    Exibindo <b>{(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, visible.length)}</b> de <b>{visible.length}</b> movimentações
+                  </span>
+                  <div className="pagination-buttons">
+                    <button
+                      className="page-nav-btn"
+                      disabled={currentPage <= 1}
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      aria-label="Página anterior"
+                    >
+                      ← Anterior
+                    </button>
+                    <div className="page-numbers">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                        .map((page, idx, arr) => (
+                          <span key={page} className="page-item-wrapper">
+                            {idx > 0 && arr[idx - 1] !== page - 1 && <span className="page-ellipsis">…</span>}
+                            <button
+                              className={`page-num-btn ${currentPage === page ? "active" : ""}`}
+                              onClick={() => setCurrentPage(page)}
+                            >
+                              {page}
+                            </button>
+                          </span>
+                        ))}
+                    </div>
+                    <button
+                      className="page-nav-btn"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      aria-label="Próxima página"
+                    >
+                      Próxima →
+                    </button>
+                  </div>
+                </footer>
+              )}
             </div>
           )}
         </section>
@@ -837,7 +954,14 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                   Valor <span className="required">obrigatório</span>
                   <div className="money-input">
                     <span>R$</span>
-                    <input name="amount" required inputMode="decimal" placeholder="0,00" />
+                    <input
+                      name="amount"
+                      required
+                      inputMode="numeric"
+                      value={formAmount}
+                      onChange={(e) => setFormAmount(formatCurrencyDigits(e.target.value))}
+                      placeholder="0,00"
+                    />
                   </div>
                 </label>
 
@@ -947,11 +1071,10 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                     <input
                       name="amount"
                       required
-                      inputMode="decimal"
-                      defaultValue={(editingItem.amount_cents / 100).toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      inputMode="numeric"
+                      value={editAmount}
+                      onChange={(e) => setEditAmount(formatCurrencyDigits(e.target.value))}
+                      placeholder="0,00"
                     />
                   </div>
                 </label>
@@ -966,6 +1089,103 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
                 </button>
               </footer>
             </form>
+          </section>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      {confirmDeleteModal && (
+        <div className="modal-backdrop" onMouseDown={() => setConfirmDeleteModal(null)}>
+          <section
+            className="modal confirm-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-title"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <header>
+              <div>
+                <span className="eyebrow" style={{ color: "var(--outflow)" }}>Confirmação</span>
+                <h2 id="confirm-title">Mover para a lixeira</h2>
+              </div>
+              <button className="icon-button" onClick={() => setConfirmDeleteModal(null)} aria-label="Fechar">
+                Fechar
+              </button>
+            </header>
+            <div className="modal-body-padded">
+              <p>
+                Tem certeza que deseja mover <strong>{confirmDeleteModal.name}</strong> ({formatMoney(confirmDeleteModal.amount_cents)}) para as excluídas?
+              </p>
+              <small className="audit-note">
+                A movimentação continuará acessível na aba &quot;Excluídas&quot; e poderá ser restaurada a qualquer momento.
+              </small>
+            </div>
+            <footer>
+              <button type="button" className="secondary-button" onClick={() => setConfirmDeleteModal(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="danger-button"
+                disabled={busy}
+                onClick={() => {
+                  const item = confirmDeleteModal;
+                  setConfirmDeleteModal(null);
+                  void toggleDeleted(item);
+                }}
+              >
+                {busy ? "Excluindo..." : "Sim, mover para lixeira"}
+              </button>
+            </footer>
+          </section>
+        </div>
+      )}
+
+      {/* Modal Lightbox de Comprovante (sem bloqueio de popup) */}
+      {previewReceipt && (
+        <div className="modal-backdrop receipt-lightbox" onMouseDown={() => setPreviewReceipt(null)}>
+          <section
+            className="modal lightbox-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="preview-title"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <header>
+              <div>
+                <span className="eyebrow">Comprovante Anexo</span>
+                <h2 id="preview-title">{previewReceipt.name}</h2>
+              </div>
+              <div className="lightbox-header-actions">
+                <a
+                  href={previewReceipt.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="secondary-button compact"
+                >
+                  Abrir original ↗
+                </a>
+                <button className="icon-button" onClick={() => setPreviewReceipt(null)} aria-label="Fechar comprovante">
+                  ✕
+                </button>
+              </div>
+            </header>
+            <div className="lightbox-content">
+              {previewReceipt.isPdf ? (
+                <iframe
+                  src={previewReceipt.url}
+                  title={previewReceipt.name}
+                  className="lightbox-iframe"
+                />
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={previewReceipt.url}
+                  alt={previewReceipt.name}
+                  className="lightbox-image"
+                />
+              )}
+            </div>
           </section>
         </div>
       )}
