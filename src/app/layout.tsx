@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Portal da Transparência · CNSP",
-  description: "Consulta de depósitos, despesas e comprovantes do Colégio N. Sra. dos Prazeres.",
+  title: "Caixa do Projeto · CNSP",
+  description: "Prestação de contas do Colégio Nossa Senhora dos Prazeres.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -446,8 +446,8 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
             className="school-logo"
           />
           <div className="brand-text">
-            <strong>Colégio N. Sra. dos Prazeres</strong>
-            <small>Portal da Transparência</small>
+            <strong>Colégio Nossa Senhora dos Prazeres</strong>
+            <small>Prestação de Contas</small>
           </div>
         </div>
         {manager ? (
@@ -475,9 +475,9 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
       <main className="dashboard">
         <section className="dashboard-heading">
           <div>
-            <span className="eyebrow">Prestação de Contas Oficial</span>
+            <span className="eyebrow">Projeto Escolar</span>
             <h1>Caixa do Projeto</h1>
-            <p>Acompanhe depósitos, despesas e comprovantes do CNSP com total transparência.</p>
+            <p>Entradas de alunos, despesas pagas e notas fiscais anexadas.</p>
           </div>
           {manager && (
             <div className="transaction-buttons">
@@ -504,20 +504,20 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
 
         <section className="summary-grid">
           <article className="summary-card balance-card">
-            <span className="card-tag">Disponibilidade</span>
+            <span className="card-tag">Saldo em Caixa</span>
             <strong>{formatMoney(deposits - expenses)}</strong>
-            <small>Saldo líquido das transações ativas</small>
+            <small>Valor disponível atualmente</small>
           </article>
           <article className="summary-card movement-card deposit-summary">
             <div>
-              <span className="card-tag positive">Total Arrecadado</span>
+              <span className="card-tag positive">Entradas</span>
               <strong className="positive">{formatMoney(deposits)}</strong>
               <small>{active.filter((i) => i.type === "deposit").length} depósitos registrados</small>
             </div>
           </article>
           <article className="summary-card movement-card expense-summary">
             <div>
-              <span className="card-tag negative">Total Investido/Gasto</span>
+              <span className="card-tag negative">Saídas</span>
               <strong className="negative">{formatMoney(expenses)}</strong>
               <small>{active.filter((i) => i.type === "expense").length} despesas registradas</small>
             </div>
@@ -528,9 +528,9 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
           <section className="project-liquidity-card">
             <div className="liquidity-info">
               <div>
-                <span className="eyebrow-small">Balanço do Projeto</span>
+                <span className="eyebrow-small">Disponibilidade</span>
                 <strong>
-                  {Math.max(0, Math.min(100, Math.round(((deposits - expenses) / deposits) * 100)))}% dos recursos continuam em caixa
+                  {Math.max(0, Math.min(100, Math.round(((deposits - expenses) / deposits) * 100)))}% do total arrecadado disponível em caixa
                 </strong>
               </div>
               <span className="liquidity-meta">{active.length} movimentações registradas</span>
@@ -813,24 +813,20 @@ export function Dashboard({ initialTransactions }: { initialTransactions: Transa
             <img src={cnspLogo.src} alt="CNSP" className="footer-logo" />
             <div>
               <strong>Colégio Nossa Senhora dos Prazeres</strong>
-              <p>Portal da Transparência · Prestação de Contas do Projeto</p>
+              <p>Prestação de contas do projeto</p>
             </div>
           </div>
 
           <div className="footer-meta">
-            <div className="footer-badge">
-              <span className="footer-badge-dot" />
-              <span>Transparência Ativa &amp; Registros Auditados</span>
-            </div>
             <p className="footer-copy">
-              Todos os lançamentos, despesas e comprovantes são armazenados em ambiente seguro com rastreabilidade individual.
+              Comprovantes e notas fiscais anexados aos pagamentos. Em caso de dúvidas sobre lançamentos ou turmas, procure a coordenação.
             </p>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <small>© {new Date().getFullYear()} Colégio N. Sra. dos Prazeres. Todos os direitos reservados.</small>
-          <small className="footer-tech">Tecnologia e Governança Azilab</small>
+          <small>© {new Date().getFullYear()} Colégio Nossa Senhora dos Prazeres</small>
+          <small className="footer-tech">Azilab</small>
         </div>
       </footer>
 
